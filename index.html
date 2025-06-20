@@ -408,6 +408,68 @@
 
     <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
     <script>
+         const app = new Vue({
+        el: '#app',
+        data: {
+            loading: true,
+            marketplace: [],
+            userCards: [],
+            userBalance: 0,
+            showSellForm: false,
+            selectedCard: null,
+            price: 0,
+            showBuyConfirmation: false,
+            buyCardId: null,
+            buyCardPrice: 0,
+            buyCardName: "",
+            token: null
+        },
+        mounted() {
+            this.initWebApp();
+            // Получаем токен из URL
+            const urlParams = new URLSearchParams(window.location.search);
+            this.token = urlParams.get('token');
+            this.loadData();
+        },
+        methods: {
+            initWebApp() {
+                this.tg = Telegram.WebApp;
+                this.tg.expand();
+                this.tg.enableClosingConfirmation();
+                this.tg.setHeaderColor('#16213e');
+                this.tg.setBackgroundColor('#1a1a2e');
+            },
+            
+            async loadData() {
+                try {
+                    if (!this.token) {
+                        this.tg.showAlert("Ошибка авторизации: токен отсутствует");
+                        return;
+                    }
+                    
+                    const response = await fetch('http://localhost:8000/api/marketplace', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ token: this.token })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        this.tg.showAlert(`Ошибка: ${error.error}`);
+                        return;
+                    }
+                    
+                    const data = await response.json();
+                    this.marketplace = data.marketplace;
+                    this.userCards = data.user_cards;
+                    this.userBalance = data.user_balance;
+                    this.loading = false;
+                    
+                } catch (error) {
+                    console.error(error);
+                    this.tg.showAlert("Ошибка загрузки данных");
+                }
+            },
         const app = new Vue({
             el: '#app',
             data: {
